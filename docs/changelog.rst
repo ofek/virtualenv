@@ -5,6 +5,31 @@ Release History
 
 .. towncrier release notes start
 
+v20.15.1 (2022-06-28)
+---------------------
+
+Bugfixes - 20.15.1
+~~~~~~~~~~~~~~~~~~
+- Fix the incorrect operation when ``setuptools`` plugins output something into ``stdout``. (`#2335 <https://github.com/pypa/virtualenv/issues/2335>`_)
+- CPython3Windows creator ignores missing ``DLLs`` dir. (`#2368 <https://github.com/pypa/virtualenv/issues/2368>`_)
+
+
+v20.15.0 (2022-06-25)
+---------------------
+
+Features - 20.15.0
+~~~~~~~~~~~~~~~~~~
+- Support for Windows embeddable Python package: includes ``python<VERSION>.zip`` in the creator sources
+  - by :user:`reksarka`. (`#1774 <https://github.com/pypa/virtualenv/issues/1774>`_)
+
+Bugfixes - 20.15.0
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded setuptools to ``62.3.3`` from ``62.6.0`` and pip to ``22.1.2`` from ``22.0.4``
+  - by :user:`gaborbernat`. (`#2348 <https://github.com/pypa/virtualenv/issues/2348>`_)
+- Use ``shlex.quote`` instead of deprecated ``pipes.quote`` in Python 3 - by :user:`frenzymadness`. (`#2351 <https://github.com/pypa/virtualenv/issues/2351>`_)
+- Fix Windows PyPy 3.6 - by :user:`reksarka`. (`#2363 <https://github.com/pypa/virtualenv/issues/2363>`_)
+
+
 v20.14.1 (2022-04-11)
 ---------------------
 
