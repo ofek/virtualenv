@@ -5,6 +5,32 @@ Release History
 
 .. towncrier release notes start
 
+v20.16.2 (2022-07-27)
+---------------------
+
+Bugfixes - 20.16.2
+~~~~~~~~~~~~~~~~~~
+- Bump embeded pip from ``22.2`` to ``22.2.1`` - by :user:`gaborbernat`. (`#2391 <https://github.com/pypa/virtualenv/issues/2391>`_)
+
+
+v20.16.1 (2022-07-26)
+---------------------
+
+Features - 20.16.1
+~~~~~~~~~~~~~~~~~~
+- Update Nushell activation scripts to version 0.67 - by :user:`kubouch`. (`#2386 <https://github.com/pypa/virtualenv/issues/2386>`_)
+
+
+v20.16.0 (2022-07-25)
+---------------------
+
+Features - 20.16.0
+~~~~~~~~~~~~~~~~~~
+- Drop support for running under Python 2 (still can generate Python 2 environments) - by :user:`gaborbernat`. (`#2382 <https://github.com/pypa/virtualenv/issues/2382>`_)
+- Upgrade embedded pip to ``22.2`` from ``22.1.2`` and  setuptools to ``63.2.0`` from ``62.6.0`` -
+  by :user:`gaborbernat`. (`#2383 <https://github.com/pypa/virtualenv/issues/2383>`_)
+
+
 v20.15.1 (2022-06-28)
 ---------------------
 
@@ -992,6 +1018,7 @@ v20.0.0b1 (2020-01-28)
 
 * First public release of the rewrite. Everything is brand new and just added.
 * ``--download`` defaults to ``False``
+* No longer replaces builtin ``site`` module with `custom version baked within virtualenv code itself <https://github.com/pypa/virtualenv/blob/legacy/virtualenv_embedded/site.py>`_. A simple shim module is used to fix up things on Python 2 only.
 
 .. warning::
 
