@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import platform
@@ -11,12 +13,11 @@ IS_WIN = sys.platform == "win32"
 IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
 ROOT = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
 IS_ZIPAPP = os.path.isfile(ROOT)
-
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = _CFG_DIR = _DATA_DIR = None
 
 
 def fs_is_case_sensitive():
-    global _FS_CASE_SENSITIVE
+    global _FS_CASE_SENSITIVE  # noqa: PLW0603
 
     if _FS_CASE_SENSITIVE is None:
         with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
@@ -26,7 +27,7 @@ def fs_is_case_sensitive():
 
 
 def fs_supports_symlink():
-    global _CAN_SYMLINK
+    global _CAN_SYMLINK  # noqa: PLW0603
 
     if _CAN_SYMLINK is None:
         can = False

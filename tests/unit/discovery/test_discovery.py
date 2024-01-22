@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import sys
@@ -31,7 +33,7 @@ def test_discovery_via_path(monkeypatch, case, tmp_path, caplog, session_app_dat
     pyvenv_cfg = Path(sys.executable).parents[1] / "pyvenv.cfg"
     if pyvenv_cfg.exists():
         (target / pyvenv_cfg.name).write_bytes(pyvenv_cfg.read_bytes())
-    new_path = os.pathsep.join([str(target)] + os.environ.get("PATH", "").split(os.pathsep))
+    new_path = os.pathsep.join([str(target), *os.environ.get("PATH", "").split(os.pathsep)])
     monkeypatch.setenv("PATH", new_path)
     interpreter = get_interpreter(core, [])
 
@@ -44,7 +46,7 @@ def test_discovery_via_path_not_found(tmp_path, monkeypatch):
     assert interpreter is None
 
 
-def test_relative_path(tmp_path, session_app_data, monkeypatch):
+def test_relative_path(session_app_data, monkeypatch):
     sys_executable = Path(PythonInfo.current_system(app_data=session_app_data).system_executable)
     cwd = sys_executable.parents[1]
     monkeypatch.chdir(str(cwd))
@@ -56,7 +58,7 @@ def test_relative_path(tmp_path, session_app_data, monkeypatch):
 def test_discovery_fallback_fail(session_app_data, caplog):
     caplog.set_level(logging.DEBUG)
     builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", "magic-two"], env=os.environ)
+        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", "magic-two"], env=os.environ),
     )
 
     result = builtin.run()
@@ -68,7 +70,7 @@ def test_discovery_fallback_fail(session_app_data, caplog):
 def test_discovery_fallback_ok(session_app_data, caplog):
     caplog.set_level(logging.DEBUG)
     builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", sys.executable], env=os.environ)
+        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", sys.executable], env=os.environ),
     )
 
     result = builtin.run()

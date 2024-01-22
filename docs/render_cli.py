@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from argparse import SUPPRESS
-from collections import namedtuple
 from contextlib import contextmanager
+from typing import Any, ClassVar, NamedTuple
 
 from docutils import nodes as n
 from docutils.parsers.rst.directives import unchanged_required
@@ -9,9 +11,17 @@ from sphinxarg.parser import parse_parser
 
 from virtualenv.run.plugin.base import ComponentBuilder
 
-TableRow = namedtuple("TableRow", ["names", "default", "choices", "help"])
 
-TextAsDefault = namedtuple("TextAsDefault", ["text"])
+class TableRow(NamedTuple):
+    names: list[str]
+    default: str
+    choices: set[str]
+    help: str
+
+
+class TextAsDefault(NamedTuple):
+    text: str
+
 
 CUSTOM = {
     "discovery": ComponentBuilder.entry_points_for("virtualenv.discovery"),
@@ -22,8 +32,8 @@ CUSTOM = {
 
 
 class CliTable(SphinxDirective):
-    name = "table_cli"
-    option_spec = dict(module=unchanged_required, func=unchanged_required)
+    name: ClassVar[str] = "table_cli"
+    option_spec: ClassVar[str, Any] = {"module": unchanged_required, "func": unchanged_required}
 
     def run(self):
         module_name, attr_name = self.options["module"], self.options["func"]
@@ -31,9 +41,7 @@ class CliTable(SphinxDirective):
         core_result = parse_parser(parser_creator())
         core_result["action_groups"] = [i for i in core_result["action_groups"] if i["title"] not in CUSTOM]
 
-        content = []
-        for i in core_result["action_groups"]:
-            content.append(self._build_table(i["options"], i["title"], i["description"]))
+        content = [self._build_table(i["options"], i["title"], i["description"]) for i in core_result["action_groups"]]
         for key, name_to_class in CUSTOM.items():
             section = n.section("", ids=[f"section-{key}"])
             title = n.title("", key)
@@ -48,7 +56,7 @@ class CliTable(SphinxDirective):
                     parser_result = parse_parser(parser_creator(cmd))
                     opt_group = next(i["options"] for i in parser_result["action_groups"] if i["title"] == key)
                     results[name] = opt_group
-            core_names = set.intersection(*list({tuple(i["name"]) for i in v} for v in results.values()))
+            core_names = set.intersection(*[{tuple(i["name"]) for i in v} for v in results.values()])
             if core_names:
                 rows = [i for i in next(iter(results.values())) if tuple(i["name"]) in core_names]
                 content.append(
@@ -74,14 +82,16 @@ class CliTable(SphinxDirective):
                     prev(*args, **kwargs)
                     if key == "activators":
                         return True
-                    elif key == "creator":
+                    if key == "creator":
                         if name == "venv":
-                            from virtualenv.create.via_global_ref.venv import ViaGlobalRefMeta
+                            from virtualenv.create.via_global_ref.venv import ViaGlobalRefMeta  # noqa: PLC0415
 
                             meta = ViaGlobalRefMeta()
                             meta.symlink_error = None
                             return meta
-                        from virtualenv.create.via_global_ref.builtin.via_global_self_do import BuiltinViaGlobalRefMeta
+                        from virtualenv.create.via_global_ref.builtin.via_global_self_do import (  # noqa: PLC0415
+                            BuiltinViaGlobalRefMeta,
+                        )
 
                         meta = BuiltinViaGlobalRefMeta()
                         meta.symlink_error = None
@@ -107,7 +117,7 @@ class CliTable(SphinxDirective):
         options_group += body
         return table
 
-    plugins = {
+    plugins: ClassVar[dict[str, str]] = {
         "creator": "virtualenv.create",
         "seed": "virtualenv.seed",
         "activators": "virtualenv.activate",
@@ -120,11 +130,16 @@ class CliTable(SphinxDirective):
         for option in options:
             names = option["name"]
             default = option["default"]
-            if default is not None:
-                if isinstance(default, str) and default and default[0] == default[-1] and default[0] == '"':
-                    default = default[1:-1]
-                    if default == SUPPRESS:
-                        default = None
+            if (
+                default is not None
+                and isinstance(default, str)
+                and default
+                and default[0] == default[-1]
+                and default[0] == '"'
+            ):
+                default = default[1:-1]
+                if default == SUPPRESS:
+                    default = None
             choices = option.get("choices")
             key = names[0].strip("-")
             if key in CliTable.plugins:
@@ -170,19 +185,8 @@ class CliTable(SphinxDirective):
     @staticmethod
     def _get_help_text(row):
         name = row.names[0]
-        if name in ("--creator",):
-            content = row.help[: row.help.index("(") - 1]
-        else:
-            content = row.help
-        if name in ("--setuptools", "--pip", "--wheel"):
-            text = row.help
-            at = text.index(" bundle ")
-            help_body = n.paragraph("")
-            help_body += n.Text(text[: at + 1])
-            help_body += n.literal(text="bundle")
-            help_body += n.Text(text[at + 7 :])
-        else:
-            help_body = n.paragraph("", "", n.Text(content))
+        content = row.help[: row.help.index("(") - 1] if name == "--creator" else row.help
+        help_body = n.paragraph("", "", n.Text(content))
         if row.choices is not None:
             help_body += n.Text("; choice of: ")
             first = True
@@ -209,11 +213,10 @@ class CliTable(SphinxDirective):
             default_body += n.literal(text="builtin")
             default_body += n.Text(" if exist, else ")
             default_body += n.literal(text="venv")
+        elif default is None:
+            default_body = n.paragraph("", text="")
         else:
-            if default is None:
-                default_body = n.paragraph("", text="")
-            else:
-                default_body = n.literal(text=default if isinstance(default, str) else str(default))
+            default_body = n.literal(text=default if isinstance(default, str) else str(default))
         return default_body
 
     def register_target_option(self, target) -> None:
@@ -223,9 +226,9 @@ class CliTable(SphinxDirective):
             domain.add_program_option(None, key, self.env.docname, key)
 
 
-def literal_data(rawtext, app, type, slug, options):
+def literal_data(rawtext, app, of_type, slug, options):  # noqa: ARG001
     """Create a link to a BitBucket resource."""
-    of_class = type.split(".")
+    of_class = of_type.split(".")
     data = getattr(__import__(".".join(of_class[:-1]), fromlist=[of_class[-1]]), of_class[-1])
     return [n.literal("", text=",".join(data))], []
 

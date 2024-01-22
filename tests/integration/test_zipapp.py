@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import shutil
 import subprocess
-import sys
+from contextlib import suppress
 from pathlib import Path
 
 import pytest
@@ -16,15 +18,15 @@ CURRENT = PythonInfo.current_system()
 @pytest.fixture(scope="session")
 def zipapp_build_env(tmp_path_factory):
     create_env_path = None
-    if sys.version_info[0:2] >= (3, 5) and CURRENT.implementation != "PyPy":
+    if CURRENT.implementation != "PyPy":
         exe = CURRENT.executable  # guaranteed to contain a recent enough pip (tox.ini)
     else:
         create_env_path = tmp_path_factory.mktemp("zipapp-create-env")
         exe, found = None, False
         # prefer CPython as builder as pypy is slow
         for impl in ["cpython", ""]:
-            for version in range(8, 4, -1):
-                try:
+            for version in range(11, 6, -1):
+                with suppress(Exception):
                     # create a virtual environment which is also guaranteed to contain a recent enough pip (bundled)
                     session = cli_run(
                         [
@@ -41,13 +43,12 @@ def zipapp_build_env(tmp_path_factory):
                     exe = str(session.creator.exe)
                     found = True
                     break
-                except Exception:
-                    pass
             if found:
                 break
         else:
-            raise RuntimeError("could not find a python to build zipapp")
-        cmd = [str(Path(exe).parent / "pip"), "install", "pip>=19.3", "packaging>=20"]
+            msg = "could not find a python to build zipapp"
+            raise RuntimeError(msg)
+        cmd = [str(Path(exe).parent / "pip"), "install", "pip>=23", "packaging>=23"]
         subprocess.check_call(cmd)
     yield exe
     if create_env_path is not None:
@@ -74,9 +75,9 @@ def zipapp_test_env(tmp_path_factory):
 
 
 @pytest.fixture()
-def call_zipapp(zipapp, monkeypatch, tmp_path, zipapp_test_env, temp_app_data):
+def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
     def _run(*args):
-        cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env")] + list(args)
+        cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env"), *list(args)]
         subprocess.check_call(cmd)
 
     return _run
@@ -85,7 +86,7 @@ def call_zipapp(zipapp, monkeypatch, tmp_path, zipapp_test_env, temp_app_data):
 @flaky(max_runs=2, min_passes=1)
 def test_zipapp_help(call_zipapp, capsys):
     call_zipapp("-h")
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert not err
 
 

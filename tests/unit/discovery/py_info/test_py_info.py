@@ -1,26 +1,29 @@
+from __future__ import annotations
+
 import copy
+import functools
 import itertools
 import json
 import logging
 import os
 import sys
 import sysconfig
-from collections import namedtuple
 from pathlib import Path
 from textwrap import dedent
+from typing import NamedTuple
 
 import pytest
 
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
-from virtualenv.info import IS_PYPY, fs_supports_symlink
+from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 
 CURRENT = PythonInfo.current_system()
 
 
 def test_current_as_json():
-    result = CURRENT._to_json()
+    result = CURRENT._to_json()  # noqa: SLF001
     parsed = json.loads(result)
     a, b, c, d, e = sys.version_info
     assert parsed["version_info"] == {"major": a, "minor": b, "micro": c, "releaselevel": d, "serial": e}
@@ -55,7 +58,7 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys, session_app_data):
     "spec",
     itertools.chain(
         [sys.executable],
-        list(
+        [
             f"{impl}{'.'.join(str(i) for i in ver)}{arch}"
             for impl, ver, arch in itertools.product(
                 (
@@ -70,7 +73,7 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys, session_app_data):
                 [sys.version_info[0 : i + 1] for i in range(3)],
                 ["", f"-{CURRENT.architecture}"],
             )
-        ),
+        ],
     ),
 )
 def test_satisfy_py_info(spec):
@@ -130,7 +133,7 @@ def test_py_info_cached_symlink_error(mocker, tmp_path, session_app_data):
     assert spy.call_count == 2
 
 
-def test_py_info_cache_clear(mocker, tmp_path, session_app_data):
+def test_py_info_cache_clear(mocker, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     result = PythonInfo.from_exe(sys.executable, session_app_data)
     assert result is not None
@@ -141,6 +144,12 @@ def test_py_info_cache_clear(mocker, tmp_path, session_app_data):
     assert spy.call_count >= 2 * count
 
 
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
+@pytest.mark.xfail(
+    # https://doc.pypy.org/en/latest/install.html?highlight=symlink#download-a-pre-built-pypy
+    IS_PYPY and IS_WIN and sys.version_info[0:2] >= (3, 9),
+    reason="symlink is not supported",
+)
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
 def test_py_info_cached_symlink(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
@@ -155,18 +164,21 @@ def test_py_info_cached_symlink(mocker, tmp_path, session_app_data):
     new_exe.symlink_to(sys.executable)
     pyvenv = Path(sys.executable).parents[1] / "pyvenv.cfg"
     if pyvenv.exists():
-        (tmp_path / pyvenv.name).write_text(pyvenv.read_text())
+        (tmp_path / pyvenv.name).write_text(pyvenv.read_text(encoding="utf-8"), encoding="utf-8")
     new_exe_str = str(new_exe)
     second_result = PythonInfo.from_exe(new_exe_str, session_app_data)
     assert second_result.executable == new_exe_str
     assert spy.call_count == count + 1  # no longer needed the host invocation, but the new symlink is must
 
 
-PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "version_info"])
+class PyInfoMock(NamedTuple):
+    implementation: str
+    architecture: int
+    version_info: VersionInfo
 
 
 @pytest.mark.parametrize(
-    "target, position, discovered",
+    ("target", "position", "discovered"),
     [
         (
             PyInfoMock("CPython", 64, VersionInfo(3, 6, 8, "final", 0)),
@@ -194,7 +206,15 @@ PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "versio
         ),
     ],
 )
-def test_system_executable_no_exact_match(target, discovered, position, tmp_path, mocker, caplog, session_app_data):
+def test_system_executable_no_exact_match(  # noqa: PLR0913
+    target,
+    discovered,
+    position,
+    tmp_path,
+    mocker,
+    caplog,
+    session_app_data,
+):
     """Here we should fallback to other compatible"""
     caplog.set_level(logging.DEBUG)
 
@@ -210,7 +230,7 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     selected = None
     for pos, i in enumerate(discovered):
         path = tmp_path / str(pos)
-        path.write_text("")
+        path.write_text("", encoding="utf-8")
         py_info = _make_py_info(i)
         py_info.system_executable = CURRENT.system_executable
         py_info.executable = CURRENT.system_executable
@@ -224,8 +244,7 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     mocker.patch.object(target_py_info, "_find_possible_exe_names", return_value=names)
     mocker.patch.object(target_py_info, "_find_possible_folders", return_value=[str(tmp_path)])
 
-    # noinspection PyUnusedLocal
-    def func(k, app_data, resolve_to_host, raise_on_error, env):
+    def func(k, app_data, resolve_to_host, raise_on_error, env):  # noqa: ARG001
         return discovered_with_path[k]
 
     mocker.patch.object(target_py_info, "from_exe", side_effect=func)
@@ -233,7 +252,7 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
 
     target_py_info.system_executable = None
     target_py_info.executable = str(tmp_path)
-    mapped = target_py_info._resolve_to_system(session_app_data, target_py_info)
+    mapped = target_py_info._resolve_to_system(session_app_data, target_py_info)  # noqa: SLF001
     assert mapped.system_executable == CURRENT.system_executable
     found = discovered_with_path[mapped.base_executable]
     assert found is selected
@@ -258,7 +277,7 @@ def test_py_info_ignores_distutils_config(monkeypatch, tmp_path):
     install_scripts={tmp_path}{os.sep}scripts
     install_data={tmp_path}{os.sep}data
     """
-    (tmp_path / "setup.cfg").write_text(dedent(raw))
+    (tmp_path / "setup.cfg").write_text(dedent(raw), encoding="utf-8")
     monkeypatch.chdir(tmp_path)
     py_info = PythonInfo.from_exe(sys.executable)
     distutils = py_info.distutils_install
@@ -288,15 +307,16 @@ def test_discover_exe_on_path_non_spec_name_not_match(mocker):
     assert CURRENT.satisfies(spec, impl_must_match=True) is False
 
 
-@pytest.mark.skipif(IS_PYPY, reason="setuptools distutil1s patching does not work")
+@pytest.mark.skipif(IS_PYPY, reason="setuptools distutils patching does not work")
 def test_py_info_setuptools():
-    from setuptools.dist import Distribution
+    from setuptools.dist import Distribution  # noqa: PLC0415
 
     assert Distribution
     PythonInfo()
 
 
-def test_py_info_to_system_raises(session_app_data, mocker, caplog, skip_if_test_in_system):
+@pytest.mark.usefixtures("_skip_if_test_in_system")
+def test_py_info_to_system_raises(session_app_data, mocker, caplog):
     caplog.set_level(logging.DEBUG)
     mocker.patch.object(PythonInfo, "_find_possible_folders", return_value=[])
     result = PythonInfo.from_exe(sys.executable, app_data=session_app_data, raise_on_error=False)
@@ -341,9 +361,6 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
         # define the prefix as sysconfig.get_preferred_scheme did before 3.11
         sysconfig_install_schemes["nt" if os.name == "nt" else "posix_prefix"] = default_scheme
 
-    if sys.version_info[0] == 2:
-        sysconfig_install_schemes = _stringify_schemes_dict(sysconfig_install_schemes)
-
     # On Python < 3.10, the distutils schemes are not derived from sysconfig schemes
     # So we mock them as well to assert the custom "venv" install scheme has priority
     distutils_scheme = {
@@ -358,9 +375,6 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
         "nt": distutils_scheme,
     }
 
-    if sys.version_info[0] == 2:
-        distutils_schemes = _stringify_schemes_dict(distutils_schemes)
-
     # We need to mock distutils first, so they don't see the mocked sysconfig,
     # if imported for the first time.
     # That can happen if the actual interpreter has the "venv" INSTALL_SCHEME
@@ -369,6 +383,99 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
     # to define all install schemes.
     mocker.patch("distutils.command.install.INSTALL_SCHEMES", distutils_schemes)
     mocker.patch("sysconfig._INSTALL_SCHEMES", sysconfig_install_schemes)
+
+    pyinfo = PythonInfo()
+    pyver = f"{pyinfo.version_info.major}.{pyinfo.version_info.minor}"
+    assert pyinfo.install_path("scripts") == "bin"
+    assert pyinfo.install_path("purelib").replace(os.sep, "/") == f"lib/python{pyver}/site-packages"
+
+
+@pytest.mark.skipif(not (os.name == "posix" and sys.version_info[:2] >= (3, 11)), reason="POSIX 3.11+ specific")
+def test_fallback_existent_system_executable(mocker):
+    current = PythonInfo()
+    # Posix may execute a "python" out of a venv but try to set the base_executable
+    # to "python" out of the system installation path. PEP 394 informs distributions
+    # that "python" is not required and the standard `make install` does not provide one
+
+    # Falsify some data to look like we're in a venv
+    current.prefix = current.exec_prefix = "/tmp/tmp.izZNCyINRj/venv"  # noqa: S108
+    current.executable = current.original_executable = os.path.join(current.prefix, "bin/python")
+
+    # Since we don't know if the distribution we're on provides python, use a binary that should not exist
+    mocker.patch.object(sys, "_base_executable", os.path.join(os.path.dirname(current.system_executable), "idontexist"))
+    mocker.patch.object(sys, "executable", current.executable)
+
+    # ensure it falls back to an alternate binary name that exists
+    current._fast_get_system_executable()  # noqa: SLF001
+    assert os.path.basename(current.system_executable) in [
+        f"python{v}" for v in (current.version_info.major, f"{current.version_info.major}.{current.version_info.minor}")
+    ]
+    assert os.path.exists(current.system_executable)
+
+
+@pytest.mark.skipif(sys.version_info[:2] != (3, 10), reason="3.10 specific")
+def test_uses_posix_prefix_on_debian_3_10_without_venv(mocker):
+    # this is taken from ubuntu 22.04 /usr/lib/python3.10/sysconfig.py
+    sysconfig_install_schemes = {
+        "posix_prefix": {
+            "stdlib": "{installed_base}/{platlibdir}/python{py_version_short}",
+            "platstdlib": "{platbase}/{platlibdir}/python{py_version_short}",
+            "purelib": "{base}/lib/python{py_version_short}/site-packages",
+            "platlib": "{platbase}/{platlibdir}/python{py_version_short}/site-packages",
+            "include": "{installed_base}/include/python{py_version_short}{abiflags}",
+            "platinclude": "{installed_platbase}/include/python{py_version_short}{abiflags}",
+            "scripts": "{base}/bin",
+            "data": "{base}",
+        },
+        "posix_home": {
+            "stdlib": "{installed_base}/lib/python",
+            "platstdlib": "{base}/lib/python",
+            "purelib": "{base}/lib/python",
+            "platlib": "{base}/lib/python",
+            "include": "{installed_base}/include/python",
+            "platinclude": "{installed_base}/include/python",
+            "scripts": "{base}/bin",
+            "data": "{base}",
+        },
+        "nt": {
+            "stdlib": "{installed_base}/Lib",
+            "platstdlib": "{base}/Lib",
+            "purelib": "{base}/Lib/site-packages",
+            "platlib": "{base}/Lib/site-packages",
+            "include": "{installed_base}/Include",
+            "platinclude": "{installed_base}/Include",
+            "scripts": "{base}/Scripts",
+            "data": "{base}",
+        },
+        "deb_system": {
+            "stdlib": "{installed_base}/{platlibdir}/python{py_version_short}",
+            "platstdlib": "{platbase}/{platlibdir}/python{py_version_short}",
+            "purelib": "{base}/lib/python3/dist-packages",
+            "platlib": "{platbase}/{platlibdir}/python3/dist-packages",
+            "include": "{installed_base}/include/python{py_version_short}{abiflags}",
+            "platinclude": "{installed_platbase}/include/python{py_version_short}{abiflags}",
+            "scripts": "{base}/bin",
+            "data": "{base}",
+        },
+        "posix_local": {
+            "stdlib": "{installed_base}/{platlibdir}/python{py_version_short}",
+            "platstdlib": "{platbase}/{platlibdir}/python{py_version_short}",
+            "purelib": "{base}/local/lib/python{py_version_short}/dist-packages",
+            "platlib": "{platbase}/local/lib/python{py_version_short}/dist-packages",
+            "include": "{installed_base}/local/include/python{py_version_short}{abiflags}",
+            "platinclude": "{installed_platbase}/local/include/python{py_version_short}{abiflags}",
+            "scripts": "{base}/local/bin",
+            "data": "{base}",
+        },
+    }
+    # reset the default in case we're on a system which doesn't have this problem
+    sysconfig_get_path = functools.partial(sysconfig.get_path, scheme="posix_local")
+
+    # make it look like python3-distutils is not available
+    mocker.patch.dict(sys.modules, {"distutils.command": None})
+    mocker.patch("sysconfig._INSTALL_SCHEMES", sysconfig_install_schemes)
+    mocker.patch("sysconfig.get_path", sysconfig_get_path)
+    mocker.patch("sysconfig.get_default_scheme", return_value="posix_local")
 
     pyinfo = PythonInfo()
     pyver = f"{pyinfo.version_info.major}.{pyinfo.version_info.minor}"

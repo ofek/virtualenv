@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import TYPE_CHECKING, Callable
 
 import pytest
 
@@ -12,9 +15,14 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import dump_datetime
 from virtualenv.seed.wheels.util import Wheel, discover_wheels
 
+if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
+    from pytest_mock import MockerFixture
+
 
 @pytest.fixture(autouse=True)
-def fake_release_date(mocker):
+def _fake_release_date(mocker):
     mocker.patch("virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path", return_value=None)
 
 
@@ -38,7 +46,13 @@ def test_download_wheel_bad_output(mocker, for_py_version, session_app_data):
     as_path.iterdir.return_value = [i.path for i in available]
 
     result = download_wheel(
-        distribution, f"=={embed.version}", for_py_version, [], session_app_data, as_path, os.environ
+        distribution,
+        f"=={embed.version}",
+        for_py_version,
+        [],
+        session_app_data,
+        as_path,
+        os.environ,
     )
     assert result.path == embed.path
 
@@ -51,7 +65,7 @@ def test_download_fails(mocker, for_py_version, session_app_data):
 
     as_path = mocker.MagicMock()
     with pytest.raises(CalledProcessError) as context:
-        download_wheel("pip", "==1", for_py_version, [], session_app_data, as_path, os.environ),
+        download_wheel("pip", "==1", for_py_version, [], session_app_data, as_path, os.environ)
     exc = context.value
     assert exc.output == "out"
     assert exc.stderr == "err"
@@ -74,10 +88,10 @@ def test_download_fails(mocker, for_py_version, session_app_data):
     ] == exc.cmd
 
 
-@pytest.fixture
+@pytest.fixture()
 def downloaded_wheel(mocker):
     wheel = Wheel.from_path(Path("setuptools-0.0.0-py2.py3-none-any.whl"))
-    yield wheel, mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", return_value=wheel)
+    return wheel, mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", return_value=wheel)
 
 
 @pytest.mark.parametrize("version", ["bundle", "0.0.0"])
@@ -105,8 +119,15 @@ def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data,
     assert write.call_count == 0
 
 
-def test_get_wheel_download_cached(tmp_path, freezer, mocker, for_py_version, downloaded_wheel):
-    from virtualenv.app_data.via_disk_folder import JSONStoreDisk
+def test_get_wheel_download_cached(
+    tmp_path: Path,
+    mocker: MockerFixture,
+    for_py_version: str,
+    downloaded_wheel: tuple[Wheel, MagicMock],
+    time_freeze: Callable[[datetime], None],
+) -> None:
+    time_freeze(datetime.now(tz=timezone.utc))
+    from virtualenv.app_data.via_disk_folder import JSONStoreDisk  # noqa: PLC0415
 
     app_data = AppDataDiskFolder(folder=str(tmp_path))
     expected = downloaded_wheel[0]
@@ -132,7 +153,7 @@ def test_get_wheel_download_cached(tmp_path, freezer, mocker, for_py_version, do
             {
                 "filename": expected.name,
                 "release_date": None,
-                "found_date": dump_datetime(datetime.now()),
+                "found_date": dump_datetime(datetime.now(tz=timezone.utc)),
                 "source": "download",
             },
         ],

@@ -1,13 +1,16 @@
-"""Helper script to rebuild virtualenv.py from virtualenv_support"""
+"""Helper script to rebuild virtualenv.py from virtualenv_support."""  # noqa: EXE002
+
+from __future__ import annotations
 
 import codecs
+import locale
 import os
 import re
 from zlib import crc32 as _crc32
 
 
 def crc32(data):
-    """Python version idempotent"""
+    """Python version idempotent."""
     return _crc32(data.encode()) & 0xFFFFFFFF
 
 
@@ -22,7 +25,7 @@ file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)
 
 
 def rebuild(script_path):
-    with open(script_path) as current_fh:
+    with script_path.open(encoding=locale.getpreferredencoding(False)) as current_fh:  # noqa: FBT003
         script_content = current_fh.read()
     script_parts = []
     match_end = 0
@@ -44,35 +47,35 @@ def rebuild(script_path):
 
 
 def handle_file(previous_content, filename, variable_name, previous_encoded):
-    print(f"Found file {filename}")
+    print(f"Found file {filename}")  # noqa: T201
     current_path = os.path.realpath(os.path.join(here, "..", "src", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
-    keep_line_ending = file_type in (".bat",)
+    keep_line_ending = file_type == ".bat"
     with open(current_path, encoding="utf-8", newline="" if keep_line_ending else None) as current_fh:
         current_text = current_fh.read()
     current_crc = crc32(current_text)
     current_encoded = b64.encode(gzip.encode(current_text.encode())[0])[0].decode()
     if current_encoded == previous_encoded:
-        print(f"  File up to date (crc: {current_crc:08x})")
+        print(f"  File up to date (crc: {current_crc:08x})")  # noqa: T201
         return False, previous_content
     # Else: content has changed
     previous_text = gzip.decode(b64.decode(previous_encoded.encode())[0])[0].decode()
     previous_crc = crc32(previous_text)
-    print(f"  Content changed (crc: {previous_crc:08x} -> {current_crc:08x})")
+    print(f"  Content changed (crc: {previous_crc:08x} -> {current_crc:08x})")  # noqa: T201
     new_part = file_template.format(filename=filename, variable=variable_name, data=current_encoded)
     return True, new_part
 
 
 def report(exit_code, new, next_match, current, script_path):
     if new != current:
-        print("Content updated; overwriting... ", end="")
-        with open(script_path, "wt") as current_fh:
+        print("Content updated; overwriting... ", end="")  # noqa: T201
+        with open(script_path, "w", encoding=locale.getpreferredencoding(False)) as current_fh:  # noqa: FBT003
             current_fh.write(new)
-        print("done.")
+        print("done.")  # noqa: T201
     else:
-        print("No changes in content")
+        print("No changes in content")  # noqa: T201
     if next_match is None:
-        print("No variables were matched/found")
+        print("No variables were matched/found")  # noqa: T201
     raise SystemExit(exit_code)
 
 

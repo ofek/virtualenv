@@ -5,6 +5,291 @@ Release History
 
 .. towncrier release notes start
 
+v20.25.0 (2023-12-01)
+---------------------
+
+Features - 20.25.0
+~~~~~~~~~~~~~~~~~~
+- The tests now pass on the CI with Python 3.13.0a2 - by :user:`hroncok`. (:issue:`2673`)
+
+Bugfixes - 20.25.0
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * wheel to ``0.41.3`` from ``0.41.2`` (:issue:`2665`)
+- Upgrade embedded wheels:
+
+  * wheel to ``0.42.0`` from ``0.41.3``
+  * setuptools to ``69.0.2`` from ``68.2.2`` (:issue:`2669`)
+
+v20.24.6 (2023-10-23)
+---------------------
+
+Bugfixes - 20.24.6
+~~~~~~~~~~~~~~~~~~
+- Use get_hookimpls method instead of the private attribute in tests. (:issue:`2649`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``68.2.2`` from ``68.2.0``
+  * pip to ``23.3.1`` from ``23.2.1`` (:issue:`2656`)
+
+
+v20.24.5 (2023-09-08)
+---------------------
+
+Bugfixes - 20.24.5
+~~~~~~~~~~~~~~~~~~
+- Declare PyPy 3.10 support - by :user:`cclauss`. (:issue:`2638`)
+- Brew on macOS no longer allows copy builds - disallow choosing this by :user:`gaborbernat`. (:issue:`2640`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``68.2.0`` from ``68.1.2`` (:issue:`2642`)
+
+
+v20.24.4 (2023-08-30)
+---------------------
+
+Bugfixes - 20.24.4
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * setuptools to ``68.1.2`` from ``68.1.0`` on ``3.8+``
+  * wheel to ``0.41.2`` from ``0.41.1``  on ``3.7+`` (:issue:`2628`)
+
+
+v20.24.3 (2023-08-11)
+---------------------
+
+Bugfixes - 20.24.3
+~~~~~~~~~~~~~~~~~~
+- Fixed ResourceWarning on exit caused by periodic update subprocess (:issue:`2472`)
+- Upgrade embedded wheels:
+
+  * wheel to ``0.41.1`` from ``0.41.0`` (:issue:`2622`)
+
+Misc - 20.24.3
+~~~~~~~~~~~~~~
+- :issue:`2610`
+
+
+v20.24.2 (2023-07-24)
+---------------------
+
+Bugfixes - 20.24.2
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * pip to ``23.2.1`` from ``23.2``
+  * wheel to ``0.41.0`` from ``0.40.0`` (:issue:`2614`)
+
+
+v20.24.1 (2023-07-19)
+---------------------
+
+Bugfixes - 20.24.1
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * pip to ``23.2`` from ``23.1.2`` - by :user:`arielkirkwood` (:issue:`2611`)
+
+
+v20.24.0 (2023-07-14)
+---------------------
+
+Features - 20.24.0
+~~~~~~~~~~~~~~~~~~
+- Export the prompt prefix as ``VIRTUAL_ENV_PROMPT`` when activating a virtual
+  environment - by :user:`jimporter`. (:issue:`2194`)
+
+Bugfixes - 20.24.0
+~~~~~~~~~~~~~~~~~~
+- Fix test suite - by :user:`gaborbernat`. (:issue:`2592`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``68.0.0`` from ``67.8.0`` (:issue:`2607`)
+
+
+v20.23.1 (2023-06-16)
+---------------------
+
+Bugfixes - 20.23.1
+~~~~~~~~~~~~~~~~~~
+- update and simplify nushell activation script, fixes an issue on Windows resulting in consecutive command not found - by :user:`melMass`. (:issue:`2572`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``67.8.0`` from ``67.7.2`` (:issue:`2588`)
+
+
+v20.23.0 (2023-04-27)
+---------------------
+
+Features - 20.23.0
+~~~~~~~~~~~~~~~~~~
+- Do not install ``wheel`` and ``setuptools`` seed packages for Python 3.12+. To restore the old behaviour use:
+
+  - for ``wheel`` use ``VIRTUALENV_WHEEL=bundle`` environment variable or ``--wheel=bundle`` CLI flag,
+  - for ``setuptools`` use ``VIRTUALENV_SETUPTOOLS=bundle`` environment variable or ``--setuptools=bundle`` CLI flag.
+
+  By :user:`chrysle`. (:issue:`2487`)
+- 3.12 support - by :user:`gaborbernat`. (:issue:`2558`)
+
+Bugfixes - 20.23.0
+~~~~~~~~~~~~~~~~~~
+- Prevent ``PermissionError`` when using venv creator on systems that deliver files without user write
+  permission - by :user:`kulikjak`. (:issue:`2543`)
+- Upgrade setuptools to ``67.7.2`` from ``67.6.1`` and pip to ``23.1.2`` from ``23.1`` - by :user:`szleb`. (:issue:`2560`)
+
+
+v20.22.0 (2023-04-19)
+---------------------
+
+Features - 20.22.0
+~~~~~~~~~~~~~~~~~~
+- Drop support for creating Python <=3.6 (including 2) interpreters. Removed pip of ``20.3.4``, ``21.3.1``; wheel of
+  ``0.37.1``; setuptools of ``59.6.0``, ``44.1.1``, ``50.3.2``- by :user:`gaborbernat`. (:issue:`2548`)
+
+
+v20.21.1 (2023-04-19)
+---------------------
+
+Bugfixes - 20.21.1
+~~~~~~~~~~~~~~~~~~
+- Add ``tox.ini`` to sdist - by :user:`mtelka`. (:issue:`2511`)
+- Move the use of 'let' in nushell to ensure compatibility with future releases of nushell, where 'let' no longer
+  assumes that its initializer is a full expressions. (:issue:`2527`)
+- The nushell command 'str collect' has been superseded by the 'str join' command. The activate.nu script has
+  been updated to reflect this change. (:issue:`2532`)
+- Upgrade embedded wheels:
+
+  * wheel to ``0.40.0`` from ``0.38.4``
+  * setuptools to ``67.6.1`` from ``67.4.0``
+  * pip to ``23.1`` from ``23.0.1`` (:issue:`2546`)
+
+
+v20.21.0 (2023-03-12)
+---------------------
+
+Features - 20.21.0
+~~~~~~~~~~~~~~~~~~
+- Make closure syntax explicitly starts with {||. (:issue:`2512`)
+
+Bugfixes - 20.21.0
+~~~~~~~~~~~~~~~~~~
+- Add ``print`` command to nushell print_prompt to ensure compatibility with future release of nushell,
+  where intermediate commands no longer print their result to stdout. (:issue:`2514`)
+- Do not assume the default encoding. (:issue:`2515`)
+- Make ``ReentrantFileLock`` thread-safe and,
+  thereby, fix race condition in ``virtualenv.cli_run`` - by :user:`radoering`. (:issue:`2516`)
+
+
+v20.20.0 (2023-02-28)
+---------------------
+
+Features - 20.20.0
+~~~~~~~~~~~~~~~~~~
+- Change environment variable existence check in Nushell activation script to not use deprecated command. (:issue:`2506`)
+
+Bugfixes - 20.20.0
+~~~~~~~~~~~~~~~~~~
+- Discover CPython implementations distributed on Windows by any organization - by :user:`faph`. (:issue:`2504`)
+- Upgrade embedded setuptools to ``67.4.0`` from ``67.1.0`` and pip to ``23.0.1`` from ``23.0`` - by :user:`gaborbernat`. (:issue:`2510`)
+
+
+v20.19.0 (2023-02-07)
+---------------------
+
+Features - 20.19.0
+~~~~~~~~~~~~~~~~~~
+- Allow platformdirs version ``3`` - by :user:`cdce8p`. (:issue:`2499`)
+
+
+v20.18.0 (2023-02-06)
+---------------------
+
+Features - 20.18.0
+~~~~~~~~~~~~~~~~~~
+- Drop ``3.6`` runtime support (can still create ``2.7+``) - by :user:`gaborbernat`. (:issue:`2489`)
+
+Bugfixes - 20.18.0
+~~~~~~~~~~~~~~~~~~
+- Fix broken prompt in Nushell when activating virtual environment - by :user:`kubouc`. (:issue:`2481`)
+- Bump embedded pip to ``23.0`` and setuptools to ``67.1`` - by :user:`gaborbernat`. (:issue:`2489`)
+
+
+v20.17.1 (2022-12-05)
+---------------------
+
+Bugfixes - 20.17.1
+~~~~~~~~~~~~~~~~~~
+- A ``py`` or ``python`` spec means any Python rather than ``CPython`` - by :user:`gaborbernat`. (`#2460 <https://github.com/pypa/virtualenv/issues/2460>`_)
+- Make ``activate.nu`` respect ``VIRTUAL_ENV_DISABLE_PROMPT`` and not set the prompt if reqeusted - by :user:`m-lima`. (`#2461 <https://github.com/pypa/virtualenv/issues/2461>`_)
+
+
+v20.17.0 (2022-11-27)
+---------------------
+
+Features - 20.17.0
+~~~~~~~~~~~~~~~~~~
+- Change Nushell activation script to be a module meant to be activated as an overlay. (`#2422 <https://github.com/pypa/virtualenv/issues/2422>`_)
+- Update operator used in Nushell activation script to be compatible with future versions. (`#2450 <https://github.com/pypa/virtualenv/issues/2450>`_)
+
+Bugfixes - 20.17.0
+~~~~~~~~~~~~~~~~~~
+- Do not use deprecated API from ``importlib.resources`` on Python 3.10 or later - by :user:`gaborbernat`. (`#2448 <https://github.com/pypa/virtualenv/issues/2448>`_)
+- Upgrade embedded setuptools to ``65.6.3`` from ``65.5.1`` - by :user:`gaborbernat`. (`#2451 <https://github.com/pypa/virtualenv/issues/2451>`_)
+
+
+v20.16.7 (2022-11-12)
+---------------------
+
+Bugfixes - 20.16.7
+~~~~~~~~~~~~~~~~~~
+- Use parent directory of python executable for pyvenv.cfg "home" value per PEP 405 - by :user:`vfazio`. (`#2440 <https://github.com/pypa/virtualenv/issues/2440>`_)
+- In POSIX virtual environments, try alternate binary names if ``sys._base_executable`` does not exist - by :user:`vfazio`. (`#2442 <https://github.com/pypa/virtualenv/issues/2442>`_)
+- Upgrade embedded wheel to ``0.38.4`` and  pip to ``22.3.1`` from ``22.3`` and setuptools to ``65.5.1`` from
+  ``65.5.0`` - by :user:`gaborbernat`. (`#2443 <https://github.com/pypa/virtualenv/issues/2443>`_)
+
+
+v20.16.6 (2022-10-25)
+---------------------
+
+Features - 20.16.6
+~~~~~~~~~~~~~~~~~~
+- Drop unneeded shims for PyPy3 directory structure (`#2426 <https://github.com/pypa/virtualenv/issues/2426>`_)
+
+Bugfixes - 20.16.6
+~~~~~~~~~~~~~~~~~~
+- Fix selected scheme on debian derivatives for python 3.10 when ``python3-distutils`` is not installed or the ``venv`` scheme is not avaiable - by :user:`asottile`. (`#2350 <https://github.com/pypa/virtualenv/issues/2350>`_)
+- Allow the test suite to pass even with the original C shell (rather than ``tcsh``) - by :user:`kulikjak`. (`#2418 <https://github.com/pypa/virtualenv/issues/2418>`_)
+- Fix fallback handling of downloading wheels for bundled packages - by :user:`schaap`. (`#2429 <https://github.com/pypa/virtualenv/issues/2429>`_)
+- Upgrade embedded setuptools to ``65.5.0`` from ``65.3.0`` and pip to ``22.3`` from ``22.2.2`` - by :user:`gaborbernat`. (`#2434 <https://github.com/pypa/virtualenv/issues/2434>`_)
+
+
+v20.16.5 (2022-09-07)
+---------------------
+
+Bugfixes - 20.16.5
+~~~~~~~~~~~~~~~~~~
+- Do not turn echo off for subsequent commands in batch activators
+  (``activate.bat`` and ``deactivate.bat``) - by :user:`pawelszramowski`. (`#2411 <https://github.com/pypa/virtualenv/issues/2411>`_)
+
+
+v20.16.4 (2022-08-29)
+---------------------
+
+Bugfixes - 20.16.4
+~~~~~~~~~~~~~~~~~~
+- Bump embed setuptools to ``65.3`` - by :user:`gaborbernat`. (`#2405 <https://github.com/pypa/virtualenv/issues/2405>`_)
+
+
+v20.16.3 (2022-08-04)
+---------------------
+
+Bugfixes - 20.16.3
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded pip to ``22.2.2`` from ``22.2.1`` and setuptools to ``63.4.1`` from ``63.2.0`` - by :user:`gaborbernat`. (`#2395 <https://github.com/pypa/virtualenv/issues/2395>`_)
+
+
 v20.16.2 (2022-07-27)
 ---------------------
 
@@ -82,7 +367,7 @@ Bugfixes - 20.14.0
 v20.13.4 (2022-03-18)
 ---------------------
 
-Bugfixes - 20.14.0
+Bugfixes - 20.13.4
 ~~~~~~~~~~~~~~~~~~
 - Improve performance of python startup inside created virtualenvs - by :user:`asottile`. (`#2317 <https://github.com/pypa/virtualenv/issues/2317>`_)
 - Upgrade embedded setuptools to ``60.10.0`` from ``60.9.3`` - by :user:`gaborbernat`. (`#2320 <https://github.com/pypa/virtualenv/issues/2320>`_)
@@ -181,7 +466,7 @@ Features - 20.11.0
 - Avoid deprecation warning from py-filelock argument - by :user:`ofek`. (`#2237 <https://github.com/pypa/virtualenv/issues/2237>`_)
 - Upgrade embedded setuptools to ``61.1.0`` from ``58.3.0`` - by :user:`gaborbernat`. (`#2240 <https://github.com/pypa/virtualenv/issues/2240>`_)
 - Drop the runtime dependency of ``backports.entry-points-selectable`` - by :user:`hroncok`. (`#2246 <https://github.com/pypa/virtualenv/issues/2246>`_)
-- Fish: PATH variables should not be quoted when being set - by :user:`hroncok`. (`#2248 <https://github.com/pypa/virtualenv/issues/2248>`_)
+- Fish: PATH variables should not be quoted when being set - by :user:`d3dave`. (`#2248 <https://github.com/pypa/virtualenv/issues/2248>`_)
 
 
 v20.10.0 (2021-11-01)
