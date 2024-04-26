@@ -19,14 +19,14 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
             self._version_cmd = [cmd, "-c", "$PSVersionTable"]
             self._invoke_script = [cmd, "-ExecutionPolicy", "ByPass", "-File"]
             self.activate_cmd = "."
-            self.script_encoding = "utf-16"
+            self.script_encoding = "utf-8-sig"
 
         def quote(self, s):
             """powershell double quote needed for quotes within single quotes"""
-            return quote(s).replace('"', '""')
+            text = quote(s)
+            return text.replace('"', '""') if sys.platform == "win32" else text
 
         def _get_test_lines(self, activate_script):
-            # for BATCH utf-8 support need change the character code page to 650001
             return super()._get_test_lines(activate_script)
 
         def invoke_script(self):

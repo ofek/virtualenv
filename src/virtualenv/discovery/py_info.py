@@ -112,8 +112,7 @@ class PythonInfo:  # noqa: PLR0904
 
         config_var_keys = set()
         for element in self.sysconfig_paths.values():
-            for k in _CONF_VAR_RE.findall(element):
-                config_var_keys.add(k[1:-1])
+            config_var_keys.update(k[1:-1] for k in _CONF_VAR_RE.findall(element))
         config_var_keys.add("PYTHONFRAMEWORK")
 
         self.sysconfig_vars = {i: sysconfig.get_config_var(i or "") for i in config_var_keys}
@@ -129,7 +128,7 @@ class PythonInfo:  # noqa: PLR0904
 
     def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties."""
-        if self.real_prefix or (
+        if self.real_prefix or (  # noqa: PLR1702
             self.base_prefix is not None and self.base_prefix != self.prefix
         ):  # if this is a virtual environment
             if self.real_prefix is None:
@@ -345,7 +344,7 @@ class PythonInfo:  # noqa: PLR0904
         return cls._current
 
     @classmethod
-    def current_system(cls, app_data=None):
+    def current_system(cls, app_data=None) -> PythonInfo:
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.

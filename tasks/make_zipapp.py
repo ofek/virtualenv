@@ -54,7 +54,7 @@ def create_zipapp(dest, packages):
 
 def write_packages_to_zipapp(base, dist, modules, packages, zip_app):  # noqa: C901
     has = set()
-    for name, p_w_v in packages.items():
+    for name, p_w_v in packages.items():  # noqa: PLR1702
         for platform, w_v in p_w_v.items():
             for wheel_data in w_v.values():
                 wheel = wheel_data.wheel
@@ -279,7 +279,7 @@ def get_wheels_for_support_versions(folder):
 class WheelForVersion:
     def __init__(self, wheel=None, versions=None) -> None:
         self.wheel = wheel
-        self.versions = versions if versions else []
+        self.versions = versions or []
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.wheel!r}, {self.versions!r})"

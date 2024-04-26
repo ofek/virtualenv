@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from itertools import chain
 from operator import attrgetter as attr
 from pathlib import Path
@@ -10,7 +10,7 @@ def is_name(path):
     return str(path) == path.name
 
 
-class FakeDataABC(metaclass=ABCMeta):
+class FakeDataABC(ABC):
     """Provides data to mock the `Path`"""
 
     @property
@@ -51,10 +51,10 @@ class PathMockABC(FakeDataABC, Path):
         # Allows to pass some tests for Windows via PosixPath.
         _flavour.altsep = _flavour.altsep or "\\"
 
-    # Python 3.13 renamed _flavour to pathmod
-    pathmod = getattr(Path(), "pathmod", None)
-    if hasattr(pathmod, "altsep"):
-        pathmod.altsep = pathmod.altsep or "\\"
+    # Python 3.13 renamed _flavour to parser
+    parser = getattr(Path(), "parser", None)
+    if hasattr(parser, "altsep"):
+        parser.altsep = parser.altsep or "\\"
 
     def exists(self):
         return self.is_file() or self.is_dir()
